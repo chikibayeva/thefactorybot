@@ -1,0 +1,45 @@
+version: '3.9'
+
+x-base: &base-thefactorybot
+  image: thefactorybot
+  build:
+    context: .
+  volumes:
+    - .:/app
+  depends_on:
+    - postgres
+    - redis
+  environment: &base-environment
+    REDIS_HOST: "redis"
+    DB_HOST: "postgres"
+  env_file:
+    - .env
+
+services:
+  app:
+    <<: *base-thefactorybot
+    environment:
+      <<: *base-environment
+      CONTAINER_TYPE: APPLICATION
+    ports:
+      - "8000:8000"
+    depends_on:
+      - celery
+
+  celery:
+    <<: *base-thefactorybot
+    environment:
+      <<: *base-environment
+      CONTAINER_TYPE: CELERY
+
+  postgres:
+    image: postgres
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: thefactorybot
+      POSTGRES_PASSWORD: thefactorybot
+      POSTGRES_DB: thefactorybot
+
+  redis:
+    image: redis
